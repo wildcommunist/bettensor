@@ -549,7 +549,7 @@ class BettensorValidator(BaseNeuron):
         state_path = self.base_path + "/state.pt"
         if path.exists(state_path):
             try:
-                bt.logging.info("loading validator state")
+                bt.logging.info("loading validator state: ", state_path)
                 state = torch.load(state_path)
                 bt.logging.debug(f"loaded the following state from file: {state}")
                 self.step = state["step"]
@@ -578,6 +578,18 @@ class BettensorValidator(BaseNeuron):
 
         # sync the metagraph
         metagraph.sync(subtensor=subtensor)
+
+        return metagraph
+
+    def sync_metagraph_lite(self, metagraph, subtensor):
+        """syncs the metagraph"""
+
+        bt.logging.debug(
+            f"syncing metagraph: {self.metagraph} with subtensor: {self.subtensor}"
+        )
+
+        # sync the metagraph
+        metagraph.sync(subtensor=subtensor, lite=True)
 
         return metagraph
 
