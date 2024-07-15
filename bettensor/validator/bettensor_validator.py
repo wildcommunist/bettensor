@@ -1020,8 +1020,6 @@ class BettensorValidator(BaseNeuron):
                     wallet=self.wallet,  # wallet to sign set weights using hotkey
                     uids=self.metagraph.uids,  # uids of the miners to set weights for
                     weights=weights,  # weights to set for the miners
-                    version_key=VERSION_KEY,
-                    wait_for_inclusion=False,
                     wait_for_finalization=False
                 )
 
