@@ -11,43 +11,32 @@
 # The above copyright notice and this permission notice shall be included in all copies or substantial portions of
 # the Software.
 
+import os
+import sys
+import time
+# Bittensor Validator Template:
+from argparse import ArgumentParser
+# from update_games import update_games
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
+
+# Bittensor
+import bittensor as bt
 # THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
 # THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
 # THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 import torch
-import time
-import sys
-import os
-
+from dotenv import load_dotenv
 
 from bettensor.protocol import GameData
-from bettensor.protocol import GameData, Metadata
-
 from bettensor.utils.sports_data import SportsData
-
-# Bittensor
-import bittensor as bt
-import copy
-from copy import deepcopy
-
-# Bittensor Validator Template:
-import bettensor
-from uuid import UUID
-from argparse import ArgumentParser
-import sqlite3
-from dotenv import load_dotenv
-import os
-
+from bettensor.utils.website_handler import fetch_and_send_predictions
 # need to import the right protocol(s) here
 from bettensor.validator.bettensor_validator import BettensorValidator
-from bettensor import protocol
 
-# from update_games import update_games
-from bettensor.utils.miner_stats import MinerStatsHandler
-from datetime import datetime, timezone, timedelta
-from bettensor.utils.website_handler import fetch_and_send_predictions
 
 def main(validator: BettensorValidator):
     # load rapid API key
@@ -62,10 +51,10 @@ def main(validator: BettensorValidator):
         "soccer": [
             {"id": "253", "season": "2024"},  # MLS
             {"id": "140", "season": "2024"},  # La Liga
-            {"id": "78", "season": "2024"},   # Bundesliga
+            {"id": "78", "season": "2024"},  # Bundesliga
             {"id": "262", "season": "2024"},  # Liga MX
-            {"id": "4", "season": "2024"},     # Euro Cup
-            {"id": "9", "season": "2024"}     # Copa America
+            {"id": "4", "season": "2024"},  # Euro Cup
+            {"id": "9", "season": "2024"}  # Copa America
         ]
     }
 
@@ -108,7 +97,7 @@ def main(validator: BettensorValidator):
                     )
                 else:
                     bt.logging.debug("Failed to fetch or send predictions")
-            
+
             # Get all axons
             all_axons = validator.metagraph.axons
             bt.logging.trace(f"All axons: {all_axons}")
@@ -123,8 +112,8 @@ def main(validator: BettensorValidator):
                         validator.scores,
                         torch.zeros(
                             (
-                                len(validator.metagraph.uids.tolist())
-                                - len(validator.scores)
+                                    len(validator.metagraph.uids.tolist())
+                                    - len(validator.scores)
                             ),
                             dtype=torch.float32,
                         ),
@@ -177,8 +166,8 @@ def main(validator: BettensorValidator):
                         f"Setting score for blacklisted UID: {uid}. Old score: {validator.scores[uid]}"
                     )
                     validator.scores[uid] = (
-                        validator.neuron_config.alpha * validator.scores[uid]
-                        + (1 - validator.neuron_config.alpha) * 0.0
+                            validator.neuron_config.alpha * validator.scores[uid]
+                            + (1 - validator.neuron_config.alpha) * 0.0
                     )
                     bt.logging.debug(
                         f"Set score for blacklisted UID: {uid}. New score: {validator.scores[uid]}"
@@ -199,8 +188,8 @@ def main(validator: BettensorValidator):
                         f"validator_alpha_type: {validator_alpha_type}, validator_scores_type: {validator_scores_type}"
                     )
                     validator.scores[uid] = (
-                        validator.neuron_config.alpha * validator.scores[uid]
-                        + (1 - validator.neuron_config.alpha) * 0.0
+                            validator.neuron_config.alpha * validator.scores[uid]
+                            + (1 - validator.neuron_config.alpha) * 0.0
                     )
                     bt.logging.trace(
                         f"Set score for not queried UID: {uid}. New score: {validator.scores[uid]}"
@@ -219,14 +208,14 @@ def main(validator: BettensorValidator):
             current_block = validator.subtensor.block
 
             bt.logging.info(
-                f"Current Step: {validator.step}, Current block: {current_block}, last_updated_block: {validator.last_updated_block}"
+                f"Current Step: {validator.step}, Current block: {current_block}, last_updated_block: {validator.last_updated_block}. Delta: {current_block - validator.last_updated_block}"
             )
 
-            if current_block - validator.last_updated_block > 199:
+            if current_block - validator.last_updated_block > (validator.weights_trigger - 1):
                 # Update results before setting weights next block
                 validator.update_recent_games()
-                
-            if current_block - validator.last_updated_block > 200:
+
+            if current_block - validator.last_updated_block > validator.weights_trigger:
                 # Periodically update the weights on the Bittensor blockchain.
                 try:
                     validator.set_weights()
@@ -239,10 +228,10 @@ def main(validator: BettensorValidator):
             validator.step += 1
 
             # Sleep for a duration equivalent to the block time (i.e., time between successive blocks).
-            bt.logging.debug("Sleeping for: 18 seconds")
+            bt.logging.info("Sleeping for: 18 seconds")
             time.sleep(18)
 
-            #bt.logging.warning(f"TESTING AUTO UPDATE!!")
+            # bt.logging.warning(f"TESTING AUTO UPDATE!!")
 
         except TimeoutError as e:
             bt.logging.debug("Validator timed out")
@@ -265,6 +254,12 @@ if __name__ == "__main__":
         help="Sets the value for the number of targets to query at once",
     )
     parser.add_argument(
+        "--weights_trigger",
+        type=int,
+        default=200,
+        help="How many blocks should the weights be set",
+    )
+    parser.add_argument(
         "--load_state",
         type=str,
         default="True",
@@ -273,8 +268,8 @@ if __name__ == "__main__":
     validator = BettensorValidator(parser=parser)
 
     if (
-        not validator.apply_config(bt_classes=[bt.subtensor, bt.logging, bt.wallet])
-        or not validator.initialize_neuron()
+            not validator.apply_config(bt_classes=[bt.subtensor, bt.logging, bt.wallet])
+            or not validator.initialize_neuron()
     ):
         bt.logging.error("Unable to initialize Validator. Exiting.")
         sys.exit()

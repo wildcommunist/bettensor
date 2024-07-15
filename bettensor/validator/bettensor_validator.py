@@ -1,23 +1,23 @@
-from argparse import ArgumentParser
-from bettensor.utils.miner_stats import MinerStatsHandler
-import bittensor as bt
-import json
-from typing import Tuple
-import sqlite3
-import os
-import sys
-import torch
-from copy import deepcopy
 import copy
-from datetime import datetime, timedelta, timezone
-from bettensor.protocol import TeamGamePrediction
-import uuid
-from pathlib import Path
-from os import path, rename
-import requests
-import time
-from dotenv import load_dotenv
+import json
 import os
+import sqlite3
+import sys
+import time
+from argparse import ArgumentParser
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
+from os import path
+from os import rename
+from pathlib import Path
+from typing import Tuple
+
+import bittensor as bt
+import requests
+import torch
+
+from bettensor.protocol import TeamGamePrediction
 
 VERSION_KEY = 40_004
 
@@ -54,6 +54,7 @@ class BettensorValidator(BaseNeuron):
         )
 
         self.timeout = 12
+        self.weights_trigger = 200
         self.neuron_config = None
         self.wallet = None
         self.subtensor = None
@@ -96,7 +97,7 @@ class BettensorValidator(BaseNeuron):
         return True
 
     def setup_bittensor_objects(
-        self, neuron_config
+            self, neuron_config
     ) -> Tuple[bt.wallet, bt.subtensor, bt.dendrite, bt.metagraph]:
         """sets up the bittensor objects"""
         try:
@@ -169,6 +170,11 @@ class BettensorValidator(BaseNeuron):
                 self.load_state()
             else:
                 self.init_default_scores()
+
+            if args.weights_trigger:
+                self.weights_trigger = args.weights_trigger
+            else:
+                self.weights_trigger = 200
 
             if args.max_targets:
                 self.max_targets = args.max_targets
@@ -380,7 +386,7 @@ class BettensorValidator(BaseNeuron):
         conn.close()
 
     def process_prediction(
-        self, processed_uids: torch.tensor, predictions: list
+            self, processed_uids: torch.tensor, predictions: list
     ) -> list:
         """
         processes responses received by miners
@@ -549,7 +555,7 @@ class BettensorValidator(BaseNeuron):
         state_path = self.base_path + "/state.pt"
         if path.exists(state_path):
             try:
-                bt.logging.info("Base path: ", self.base_path )
+                bt.logging.info("Base path: ", self.base_path)
                 bt.logging.info("loading validator state: ", state_path)
                 state = torch.load(state_path)
                 bt.logging.debug(f"loaded the following state from file: {state}")
@@ -639,12 +645,12 @@ class BettensorValidator(BaseNeuron):
             [
                 bool(value)
                 for value in [
-                    ip != "0.0.0.0"
-                    for ip in [
-                        self.metagraph.neurons[uid].axon_info.ip
-                        for uid in self.metagraph.uids.tolist()
-                    ]
+                ip != "0.0.0.0"
+                for ip in [
+                    self.metagraph.neurons[uid].axon_info.ip
+                    for uid in self.metagraph.uids.tolist()
                 ]
+            ]
             ],
             dtype=torch.bool,
         )
@@ -760,7 +766,7 @@ class BettensorValidator(BaseNeuron):
         conn = self.connect_db()
         cursor = conn.cursor()
         two_days_ago = (
-            datetime.utcnow().replace(tzinfo=timezone.utc) - timedelta(hours=48)
+                datetime.utcnow().replace(tzinfo=timezone.utc) - timedelta(hours=48)
         ).isoformat()
         cursor.execute(
             "SELECT id, teamA, teamB, externalId FROM game_data WHERE eventStartDate >= ? AND outcome = 'Unfinished'",
