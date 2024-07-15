@@ -73,7 +73,7 @@ def main():
 
     validator.add_new_miners()
 
-    validator.set_weights()
+    validator.set_weights_hc()
 
 
 if __name__ == "__main__":

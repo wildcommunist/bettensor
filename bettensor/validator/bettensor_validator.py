@@ -1008,6 +1008,33 @@ class BettensorValidator(BaseNeuron):
         if stake < 1000.0:
             bt.logging.error("Insufficient stake. Failed in setting weights.")
         else:
+            result = self.subtensor.set_weights(
+                netuid=self.neuron_config.netuid,  # subnet to set weights on
+                wallet=self.wallet,  # wallet to sign set weights using hotkey
+                uids=self.metagraph.uids,  # uids of the miners to set weights for
+                weights=weights,  # weights to set for the miners
+                wait_for_inclusion=False,
+            )
+            bt.logging.info(f"Printing weights: {weights}")
+            if result:
+                bt.logging.info("Successfully set weights.")
+            else:
+                bt.logging.error("Failed to set weights.")
+
+    def set_weights_hc(self):
+        """Sets the weights for the miners based on their calculated scores"""
+        # Calculate miner scores
+        earnings = self.calculate_miner_scores()
+
+        # Normalize the earnings tensor to get weights
+        weights = torch.nn.functional.normalize(earnings, p=1.0, dim=0)
+
+        # Check stake and set weights
+        uid = self.metagraph.hotkeys.index(self.wallet.hotkey.ss58_address)
+        stake = float(self.metagraph.S[uid])
+        if stake < 1000.0:
+            bt.logging.error("Insufficient stake. Failed in setting weights.")
+        else:
             bt.logging.debug(f"Printing weights: {weights}")
             NUM_TIMES_TO_SET_WEIGHTS = 3
             bt.logging.info(
@@ -1020,7 +1047,7 @@ class BettensorValidator(BaseNeuron):
                     wallet=self.wallet,  # wallet to sign set weights using hotkey
                     uids=self.metagraph.uids,  # uids of the miners to set weights for
                     weights=weights,  # weights to set for the miners
-                    wait_for_finalization=False
+                    wait_for_finalization=True
                 )
 
                 if result:
@@ -1028,4 +1055,4 @@ class BettensorValidator(BaseNeuron):
                 else:
                     bt.logging.error("❌Failed to set weights.")
 
-                time.sleep(30)
+                time.sleep(3)
