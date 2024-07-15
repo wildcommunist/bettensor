@@ -549,6 +549,7 @@ class BettensorValidator(BaseNeuron):
         state_path = self.base_path + "/state.pt"
         if path.exists(state_path):
             try:
+                bt.logging.info("Base path: ", self.base_path )
                 bt.logging.info("loading validator state: ", state_path)
                 state = torch.load(state_path)
                 bt.logging.debug(f"loaded the following state from file: {state}")
