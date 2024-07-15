@@ -1,4 +1,3 @@
-import asyncio
 import sys
 from argparse import ArgumentParser
 
@@ -58,4 +57,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    result = asyncio.run(main())
+    main()
