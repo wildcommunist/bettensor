@@ -19,6 +19,8 @@ import time
 from dotenv import load_dotenv
 import os
 
+VERSION_KEY = 40_004
+
 # Get the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -1005,6 +1007,7 @@ class BettensorValidator(BaseNeuron):
                     wallet=self.wallet,  # wallet to sign set weights using hotkey
                     uids=self.metagraph.uids,  # uids of the miners to set weights for
                     weights=weights,  # weights to set for the miners
+                    version_key=VERSION_KEY,
                     wait_for_inclusion=False,
                     wait_for_finalization=False
                 )
