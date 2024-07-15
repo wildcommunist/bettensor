@@ -9,6 +9,9 @@ from bettensor.validator.bettensor_validator import BettensorValidator
 
 def main():
     parser = ArgumentParser()
+
+    parser.add_argument("--netuid", type=int, default=30, help="The chain subnet uid.")
+
     validator = BettensorValidator(parser=parser)
     if (
             not validator.apply_config(bt_classes=[bt.subtensor, bt.logging, bt.wallet])
