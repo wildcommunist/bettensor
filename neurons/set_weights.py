@@ -7,7 +7,7 @@ import torch
 from bettensor.validator.bettensor_validator import BettensorValidator
 
 
-async def main():
+def main():
     parser = ArgumentParser()
     validator = BettensorValidator(parser=parser)
     if (
