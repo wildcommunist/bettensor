@@ -10,7 +10,24 @@ from bettensor.validator.bettensor_validator import BettensorValidator
 def main():
     parser = ArgumentParser()
 
+    parser.add_argument(
+        "--alpha", type=float, default=0.9, help="The alpha value for the validator."
+    )
+
     parser.add_argument("--netuid", type=int, default=30, help="The chain subnet uid.")
+
+    parser.add_argument(
+        "--max_targets",
+        type=int,
+        default=128,
+        help="Sets the value for the number of targets to query at once",
+    )
+    parser.add_argument(
+        "--load_state",
+        type=str,
+        default="True",
+        help="WARNING: Setting this value to False clears the old state.",
+    )
 
     validator = BettensorValidator(parser=parser)
     if (
