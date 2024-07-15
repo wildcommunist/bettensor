@@ -218,7 +218,7 @@ def main(validator: BettensorValidator):
 
             current_block = validator.subtensor.block
 
-            bt.logging.debug(
+            bt.logging.info(
                 f"Current Step: {validator.step}, Current block: {current_block}, last_updated_block: {validator.last_updated_block}"
             )
 
