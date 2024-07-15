@@ -38,7 +38,7 @@ def main():
         sys.exit()
 
     try:
-        validator.metagraph = validator.sync_metagraph(
+        validator.metagraph = validator.sync_metagraph_lite(
             validator.metagraph, validator.subtensor
         )
         bt.logging.debug(f"Metagraph synced: {validator.metagraph}")
@@ -47,10 +47,6 @@ def main():
         sys.exit()
 
     validator.check_hotkeys()
-
-    # Get all axons
-    all_axons = validator.metagraph.axons
-    bt.logging.trace(f"All axons: {all_axons}")
 
     # If there are more axons than scores, append the scores list and add new miners to the database
     if len(validator.metagraph.uids.tolist()) > len(validator.scores):

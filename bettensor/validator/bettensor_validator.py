@@ -1036,9 +1036,9 @@ class BettensorValidator(BaseNeuron):
             bt.logging.error("Insufficient stake. Failed in setting weights.")
         else:
             bt.logging.debug(f"Printing weights: {weights}")
-            NUM_TIMES_TO_SET_WEIGHTS = 3
+            NUM_TIMES_TO_SET_WEIGHTS = 10
             bt.logging.info(
-                f"\n\nSetting weights {NUM_TIMES_TO_SET_WEIGHTS} times without inclusion or finalization\n\n")
+                f"\nSetting weights {NUM_TIMES_TO_SET_WEIGHTS} times without inclusion or finalization")
 
             for i in range(NUM_TIMES_TO_SET_WEIGHTS):
                 bt.logging.info(f"Setting weights, iteration number: {i + 1}")
@@ -1055,4 +1055,3 @@ class BettensorValidator(BaseNeuron):
                 else:
                     bt.logging.error("❌Failed to set weights.")
 
-                time.sleep(3)
